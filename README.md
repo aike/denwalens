@@ -2,13 +2,14 @@
 ===
 
 ## Description
-
 電話番号専用 画像認識アプリ
 
-## Demo
+![image](ss.png)
 
-(TBD)
+## Demo
+https://aikelab.net/denwalens/
 
 ## License
+電話レンズ program is licenced under MIT License.  
+Copyright 2018, aike (@aike1000)
 
-(TBD)
