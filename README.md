@@ -10,6 +10,5 @@
 https://aikelab.net/denwalens/
 
 ## License
-電話レンズ program is licenced under MIT License.  
-Copyright 2018, aike (@aike1000)
-
+Copyright(c) 2018 aike (@aike1000)
+Released under MIT License.  
