@@ -6,7 +6,9 @@ import Footer from './footer';
 class App extends Component {
 
   state = {
-    tel_numbers: []
+    tel_numbers: [],
+    key: '',
+    showWait: false
   };
 
  componentDidMount() {
@@ -15,19 +17,21 @@ class App extends Component {
       this.setState({tel_numbers: []});
       Promise.resolve(ev.target.files[0])
         .then(this.readFile)
-        .then(this.sendAPI)
+        .then(file => {return this.sendAPI(file, this.state.key);})
         .then(res => {
           console.log('SUCCESS!', res);
           this.parseResult(res);
+          this.setState({showWait:false});
         })
         .catch(err => {
           console.log('FAILED:(', err);
+          this.setState({showWait:false});
         });
     });
   }
 
-  sendAPI(base64string) {
-    const api_key = document.querySelector('#api_key').value;
+  sendAPI(base64string, key) {
+    this.setState({showWait:true});
     let body = {
       requests: [
         {image: {content: base64string}, features: [{type: 'TEXT_DETECTION'}]}
@@ -35,7 +39,7 @@ class App extends Component {
     };
     let xhr = new XMLHttpRequest();
     const url = `https://vision.googleapis.com/v1/images:annotate`;
-    xhr.open('POST', `${url}?key=${api_key}`, true);
+    xhr.open('POST', `${url}?key=${key}`, true);
     xhr.setRequestHeader('Content-Type', 'application/json');
     const p = new Promise((resolve, reject) => {
       xhr.onreadystatechange = () => {
@@ -62,21 +66,26 @@ class App extends Component {
 
   parseResult(json) {
     const arr_json = json.responses[0].textAnnotations;
-    // jsonの配列を文字列(複数行を含む)の配列にする
-    const arr_multiline = arr_json.map(item => item.description);
 
-    // 複数行の項目を分割して配列に再格納する
-    let arr_line = [];
-    arr_multiline.forEach((item) => {
-      const lines = item.split('\n');
-      lines.forEach((line) => {
-        arr_line.push(line);
-      })
+    const arr_line = [];
+    // JSONの各項目についてループ
+    arr_json.forEach((item) => {
+      // 高速化のために短すぎる文字列はここで無視する
+      if (item.description.length >= 10) {        
+        const lines = item.description.split('\n');
+        // 複数行の項目を分割して配列に再格納する
+        lines.forEach((line) => {
+          // 短すぎる文字列はここで再度無視する
+          if (line.length >= 10) {        
+            arr_line.push(line);
+          }
+        })
+      }
     });
 
-    // 数字、ハイフン、カッコ、スペースの連続を電話番号とみなす
     let tel_numbers = [];
     arr_line.forEach((str) => {
+      // 数字、ハイフン、カッコ、スペースの連続を電話番号とみなす
       const match_str = str.match(/[\d\-() ]+/g);
       // 電話番号が存在するか
       if (match_str !== null) {
@@ -92,17 +101,24 @@ class App extends Component {
       }
     });
 
-    // 一度Setにすることで重複要素を削除する
-    const tel_uniq = Array.from(new Set(tel_numbers));
-    this.setState({tel_numbers: tel_uniq});
+    this.setState({tel_numbers: tel_numbers});
+  }
+
+  changeKey(key) {
+    this.setState({key:key});
   }
 
   render() {
     // 結果リストタグの作成
+    const hash = {};
     const result = [];
     this.state.tel_numbers.forEach((item) => {
       const num = item.replace(/[-() ]/g, "");
-      result.push(<li><a href={'tel:'+num}>{item}</a></li>);
+      // 重複チェック
+      if (!hash[num]) {
+        hash[num] = true;
+        result.push(<li key={num}><a href={'tel:'+num}>{item}</a></li>);
+      }
     });
 
     return (
@@ -116,11 +132,14 @@ class App extends Component {
           <div id="content">
             <div>電話番号専用 画像認識アプリ</div>
 
-            <APIKey />
+            <APIKey onChange={(key)=>{this.changeKey(key);}} />
 
             <div style={{ marginTop:'15px'}}>
               <input id="filesel" type="file" accept="image/*" />
             </div>
+
+            {this.state.showWait && 
+              <div style={{margin:'24px 20px'}}>wait ...</div>}
 
             <ul style={{marginLeft:'-20px', fontSize:'18px', lineHeight:'24px'}}>
               {result}

@@ -1,0 +1,4 @@
+SetEnvIf Referer "^https://aikelab\.net/denwalens" valid_referer
+order deny,allow
+deny from all
+allow from env=valid_referer
