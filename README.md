@@ -10,5 +10,5 @@
 https://aikelab.net/denwalens/
 
 ## License
-Copyright(c) 2018 aike (@aike1000)
-Released under MIT License.  
+Copyright(c) 2018 aike (@aike1000)  
+Released under MIT License.
