@@ -6,9 +6,9 @@
 
 ![image](ss.png)
 
-## Demo
+## Website
 https://aikelab.net/denwalens/
 
-## License
+## Credit
 Copyright(c) 2018 aike (@aike1000)  
 Released under the MIT License
