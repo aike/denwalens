@@ -38,8 +38,8 @@ class App extends Component {
       ]
     };
     let xhr = new XMLHttpRequest();
-    const url = `https://vision.googleapis.com/v1/images:annotate`;
-    xhr.open('POST', `${url}?key=${key}`, true);
+    const url = 'https://vision.googleapis.com/v1/images:annotate?key='+key;
+    xhr.open('POST', url, true);
     xhr.setRequestHeader('Content-Type', 'application/json');
     const p = new Promise((resolve, reject) => {
       xhr.onreadystatechange = () => {
