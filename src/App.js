@@ -19,12 +19,12 @@ class App extends Component {
         .then(this.readFile)
         .then(file => {return this.sendAPI(file, this.state.key);})
         .then(res => {
-          console.log('SUCCESS!', res);
+          console.log('SUCCESS');
           this.parseResult(res);
           this.setState({showWait:false});
         })
         .catch(err => {
-          console.log('FAILED:(', err);
+          console.log('FAILED');
           this.setState({showWait:false});
         });
     });
@@ -83,7 +83,7 @@ class App extends Component {
       }
     });
 
-    let tel_numbers = [];
+    const tel_numbers = [];
     arr_line.forEach((str) => {
       // 数字、ハイフン、カッコ、スペースの連続を電話番号とみなす
       const match_str = str.match(/[\d\-() ]+/g);
