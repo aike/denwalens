@@ -6,7 +6,6 @@ import Footer from './footer';
 class App extends Component {
 
   state = {
-    tel_numbers: [],
     key: '',
     showWait: false
   };
@@ -14,7 +13,6 @@ class App extends Component {
  componentDidMount() {
     document.querySelector('#filesel').addEventListener('change', ev => {
       if (!ev.target.files || ev.target.files.length === 0) return;
-      this.setState({tel_numbers: []});
       Promise.resolve(ev.target.files[0])
         .then(this.readFile)
         .then(file => {return this.sendAPI(file, this.state.key);})
@@ -53,6 +51,12 @@ class App extends Component {
   }
 
   readFile(file) {
+    // 結果リスト消去（高速版）
+    const result = document.querySelector('#resultarea');
+    if (result.firstChild !== null) {
+      result.removeChild(result.firstChild);
+    }
+
     let reader = new FileReader();
     const p = new Promise((resolve, reject) => {
       reader.onload = (ev) => {
@@ -65,43 +69,48 @@ class App extends Component {
   }
 
   parseResult(json) {
-    const arr_json = json.responses[0].textAnnotations;
-
-    const arr_line = [];
-    // JSONの各項目についてループ
-    arr_json.forEach((item) => {
+    const arr_annotations = json.responses[0].textAnnotations;
+    const tel_numbers = [];
+    arr_annotations.forEach((item) => {
       // 高速化のために短すぎる文字列はここで無視する
       if (item.description.length >= 10) {        
-        const lines = item.description.split('\n');
-        // 複数行の項目を分割して配列に再格納する
-        lines.forEach((line) => {
-          // 短すぎる文字列はここで再度無視する
-          if (line.length >= 10) {        
-            arr_line.push(line);
-          }
-        })
+        const str = item.description;
+        // 数字、ハイフン、カッコ、スペースの連続を電話番号とみなす
+        const match_str = str.match(/[\d\-() ]+/g);
+        // 電話番号が存在するか
+        if (match_str !== null) {
+          // 電話番号が複数存在する場合を考慮してループ
+          match_str.forEach((item) => {
+            // ハイフン、カッコ、スペースを削除して数字のみを得る
+            const num = item.replace(/[-() ]/g, '');
+            // 数字のみで10〜11桁のものを電話番号として配列にする
+            if ((num.length >= 10) && (num.length <= 11)) {
+              tel_numbers.push({str:item, num:num});
+            }
+          });
+        }
       }
     });
 
-    const tel_numbers = [];
-    arr_line.forEach((str) => {
-      // 数字、ハイフン、カッコ、スペースの連続を電話番号とみなす
-      const match_str = str.match(/[\d\-() ]+/g);
-      // 電話番号が存在するか
-      if (match_str !== null) {
-        // 電話番号が複数存在する場合を考慮してループ
-        match_str.forEach((item) => {
-          // ハイフン、カッコ、スペースを削除して数字のみを得る
-          const num = item.replace(/[-() ]/g, "");
-          // 数字のみで10〜11桁のものを電話番号として配列にする
-          if ((num.length >= 10) && (num.length <= 11)) {
-            tel_numbers.push(item);
-          }
-        });
+    this.showResult(tel_numbers);
+  }
+
+  showResult(tel_numbers) {
+    // 結果リスト表示（高速版）
+    const hash = {};
+    tel_numbers.forEach(item => {
+      // 重複チェック
+      if (!hash[item.num]) {
+        hash[item.num] = true;
+        const parent = document.querySelector('#resultarea');
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.innerText = item.str;
+        a.href = 'tel:' + item.num;
+        li.appendChild(a);
+        parent.appendChild(li);
       }
     });
-
-    this.setState({tel_numbers: tel_numbers});
   }
 
   changeKey(key) {
@@ -109,18 +118,6 @@ class App extends Component {
   }
 
   render() {
-    // 結果リストタグの作成
-    const hash = {};
-    const result = [];
-    this.state.tel_numbers.forEach((item) => {
-      const num = item.replace(/[-() ]/g, "");
-      // 重複チェック
-      if (!hash[num]) {
-        hash[num] = true;
-        result.push(<li key={num}><a href={'tel:'+num}>{item}</a></li>);
-      }
-    });
-
     return (
       <div className="App">
 
@@ -141,10 +138,8 @@ class App extends Component {
             {this.state.showWait && 
               <div style={{margin:'24px 20px'}}>wait ...</div>}
 
-            <ul style={{marginLeft:'-20px', fontSize:'18px', lineHeight:'24px'}}>
-              {result}
+            <ul id="resultarea" style={{marginLeft:'-20px', fontSize:'18px', lineHeight:'24px'}}>
             </ul>
-
           </div>
 
           <Footer />
