@@ -136,7 +136,7 @@ class App extends Component {
             </div>
 
             {this.state.showWait && 
-              <div style={{margin:'24px 20px'}}>wait ...</div>}
+              <div style={{margin:'24px 20px'}}>finding ... <img src="loading.gif" /></div>}
 
             <ul id="resultarea" style={{marginLeft:'-20px', fontSize:'18px', lineHeight:'24px'}}>
             </ul>
